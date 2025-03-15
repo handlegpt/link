@@ -5,76 +5,81 @@ import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { User, LogOut, AlertCircle } from 'lucide-react';
+import { User, LogOut, AlertCircle, Shield } from 'lucide-react';
 import useMediaQuery from '@/hooks/use-media-query';
 import { Drawer } from 'vaul';
 import UserNavButtonMobile from './usernavbutton-mobile';
+import useCurrentUser from '@/hooks/useCurrentUser';
 
 const UserAccountNavDesktop = () => {
   const session = useSession();
   const { data } = session;
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
 
   const { isMobile } = useMediaQuery();
 
   const handleLogout = async () => {
     try {
       await signOut();
-      toast.success('You logged out');
+      toast.success('您已退出登录');
     } catch (error) {
-      toast.error('An error occurred');
+      toast.error('退出失败');
     } finally {
       router.push('/login');
     }
   };
 
-  return (
-    <>
-      <Popover.Root>
-        {isMobile ? (
-          <Drawer.Root shouldScaleBackground>
-            <Drawer.Trigger>
-              <UserAvatar size={35} />
-            </Drawer.Trigger>
-            <UserNavButtonMobile data={data} logout={handleLogout} />
-          </Drawer.Root>
-        ) : (
-          <Popover.Trigger className="">
-            <UserAvatar size={35} />
-          </Popover.Trigger>
-        )}
+  if (isMobile) {
+    return <UserNavButtonMobile />;
+  }
 
-        <Popover.Portal>
-          <Popover.Content
-            className="z-50 w-[130px] mr-2 items-center rounded-md border border-gray-200 bg-white drop-shadow-lg md:block lg:w-[150px]"
-            sideOffset={4}
-          >
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <button className="flex items-center gap-2 rounded-full border border-gray-200 p-1 hover:bg-gray-100">
+          <UserAvatar />
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          className="z-50 w-[200px] rounded-xl bg-white p-2 shadow-lg"
+          sideOffset={5}
+          align="end"
+        >
+          <div className="flex flex-col gap-1">
+            <div className="border-b px-2 pb-2">
+              <p className="text-sm text-gray-500">
+                {data?.user?.email}
+              </p>
+            </div>
             <Link
               href="/admin/settings"
-              className="group flex w-full items-center gap-2 rounded-md p-3 text-sm font-medium text-gray-500 transition-all duration-75 hover:bg-gray-100"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-100"
             >
-              <User size={17} color="gray" />
-              <h4 className="w-full truncate">{data.user.name}</h4>
+              <User size={16} />
+              个人设置
             </Link>
-            <Link
-              target="_blank"
-              href="https://github.com/urdadx/librelinks/issues/new/choose"
-              className="group flex w-full items-center gap-2 rounded-md p-3 text-sm font-medium text-gray-500 transition-all duration-75 hover:bg-gray-100"
-            >
-              <AlertCircle size={17} color="gray" />
-              <h4>Feedback</h4>
-            </Link>
+            {currentUser?.role === 'admin' && (
+              <Link
+                href="/admin/dashboard"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-100"
+              >
+                <Shield size={16} />
+                管理后台
+              </Link>
+            )}
             <button
               onClick={handleLogout}
-              className="group flex w-full items-center gap-2 rounded-md p-3 text-sm font-medium text-red-400 transition-all duration-75 hover:bg-red-500 hover:text-white"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-red-600 hover:bg-red-50"
             >
-              <LogOut size={17} className="text-b-400 hover:text-white" />
-              <h4>Sign out</h4>
+              <LogOut size={16} />
+              退出登录
             </button>
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
-    </>
+          </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 };
 
