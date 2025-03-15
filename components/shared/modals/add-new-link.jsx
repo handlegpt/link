@@ -19,6 +19,7 @@ const AddLinkModal = ({ selectedGroup }) => {
   const [isSocial, setIsSocial] = useState(false);
   const [urlError, setUrlError] = useState(false);
   const [groupId, setGroupId] = useState(selectedGroup || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: currentUser } = useCurrentUser();
   const userId = currentUser?.id ?? null;
@@ -38,55 +39,61 @@ const AddLinkModal = ({ selectedGroup }) => {
     enabled: !!userId
   });
 
-  const addLinkMutation = useMutation(
-    async ({ title, url, order, groupId }) => {
+  const addLinkMutation = useMutation({
+    mutationFn: async ({ title, url, order, groupId }) => {
       const response = await axios.post('/api/links', {
         title,
         url,
         order,
         isSocial,
-        groupId: groupId || undefined
+        groupId: groupId === '' ? undefined : groupId
       });
       return response.data;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['links', userId] });
-        queryClient.invalidateQueries({ queryKey: ['linkGroups', userId] });
-        setTitle('');
-        setUrl('');
-        setIsSocial(false);
-        setGroupId('');
-        signalIframe();
-      },
-      onError: (error) => {
-        console.error('Mutation error:', error);
-        toast.error('添加链接失败，请重试');
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries(['links', userId]);
+      queryClient.invalidateQueries(['linkGroups', userId]);
+      setTitle('');
+      setUrl('');
+      setIsSocial(false);
+      setGroupId('');
+      signalIframe();
+      toast.success('链接添加成功');
+    },
+    onError: (error) => {
+      console.error('添加链接失败:', error);
+      toast.error(error.response?.data?.error || '添加链接失败，请重试');
     }
-  );
+  });
 
-  const submitLink = async () => {
+  const submitLink = async (event) => {
+    event.preventDefault();
+    
+    if (isSubmitting) return;
+    
     if (title.trim() === '' || url.trim() === '') {
       toast.error('请填写完整信息');
       return;
     }
+
+    if (urlError) {
+      toast.error('请输入有效的链接地址');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
     try {
-      await toast.promise(
-        addLinkMutation.mutateAsync({
-          title,
-          url,
-          order,
-          groupId: groupId || undefined  // 如果 groupId 为空字符串，则设为 undefined
-        }),
-        {
-          loading: '添加链接中',
-          success: '链接添加成功',
-          error: '发生错误',
-        }
-      );
+      await addLinkMutation.mutateAsync({
+        title: title.trim(),
+        url: url.trim(),
+        order,
+        groupId
+      });
     } catch (error) {
-      console.error('添加链接失败:', error);
+      console.error('提交链接时出错:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -205,14 +212,15 @@ const AddLinkModal = ({ selectedGroup }) => {
               取消
             </button>
           </Dialog.Close>
-          <Dialog.Close asChild>
-            <button
-              className="bg-blue-600 text-white hover:bg-blue-700 focus:shadow-blue-200 inline-flex h-[35px] items-center justify-center rounded-[4px] px-[15px] font-medium leading-none focus:shadow-[0_0_0_2px] focus:outline-none"
-              onClick={submitLink}
-            >
-              保存
-            </button>
-          </Dialog.Close>
+          <button
+            className={`bg-blue-600 text-white hover:bg-blue-700 focus:shadow-blue-200 inline-flex h-[35px] items-center justify-center rounded-[4px] px-[15px] font-medium leading-none focus:shadow-[0_0_0_2px] focus:outline-none ${
+              isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            onClick={submitLink}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '保存中...' : '保存'}
+          </button>
         </div>
         <Dialog.Close asChild>
           <button
