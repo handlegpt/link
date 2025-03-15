@@ -20,6 +20,7 @@ model User {
   totalViews     Int       @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  role           String    @default("user")
   links          Link[]
   linksLocation String?   @default("top")
   themePalette   Json?     @default("{\"name\": \"Light\", \"palette\": [\"#FFFFFF\", \"#F2F2F2\", \"#1F2937\", \"#6170F8\"]}")
