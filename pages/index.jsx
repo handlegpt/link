@@ -178,9 +178,9 @@ const Home = () => {
                   <Link
                     className="group inline-flex items-center gap-2 px-4 text-sm  bg-slate-900 border rounded-3xl text-white w-[116px] h-[35px] justify-center font-semibold transition-colors hover:bg-slate-700"
                     rel="noopener noreferrer"
-                    href="/admin"
+                    href={isAuthenticated ? '/user' : '/login'}
                   >
-                    {isAuthenticated ? 'Admin' : 'Login'}
+                    Login
                   </Link>
                 </div>
               </nav>
