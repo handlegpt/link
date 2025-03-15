@@ -1,5 +1,35 @@
 import axios from 'axios';
 
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+};
+
+const formatTime = (timeString) => {
+  const date = new Date(timeString);
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+const getMockData = () => {
+  const mockData = [];
+  const today = new Date();
+  
+  // 生成过去7天的模拟数据
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    mockData.push({
+      t: formatDate(date.toISOString()),
+      visits: 0
+    });
+  }
+  return mockData;
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).end();
@@ -12,92 +42,41 @@ export default async function handler(req, res) {
       return res.status(404).end();
     }
 
+    // 如果没有配置 Tinybird token，返回模拟数据
     if (!process.env.ANALYTICS_TOKEN) {
-      // 返回正确格式的模拟数据
-      const mockData = [];
-      const today = new Date();
-      
-      // 生成过去7天的模拟数据
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        mockData.push({
-          t: formatDate(date.toISOString()),
-          visits: 0
-        });
-      }
-      
-      return res.status(200).json(mockData);
+      return res.status(200).json(getMockData());
     }
 
     const endpoint = 'https://api.tinybird.co/v0/pipes/libre_page_views.json';
 
-    const analytics = await axios.get(
-      `${endpoint}?token=${process.env.ANALYTICS_TOKEN}&filter=${filter}&handle=/${handle}`
-    );
+    try {
+      const analytics = await axios.get(
+        `${endpoint}?token=${process.env.ANALYTICS_TOKEN}&filter=${filter}&handle=/${handle}`
+      );
 
-    let analytics_formatted;
+      let analytics_formatted;
 
-    if (filter !== 'last_24_hours' && filter !== 'last_hour') {
-      analytics_formatted = analytics.data.data.map(({ t, visits }) => ({
-        t: formatDate(t),
-        visits,
-      }));
-    } else {
-      analytics_formatted = analytics.data.data.map(({ t, visits }) => ({
-        t: formatTime(t),
-        visits,
-      }));
+      if (filter !== 'last_24_hours' && filter !== 'last_hour') {
+        analytics_formatted = analytics.data.data.map(({ t, visits }) => ({
+          t: formatDate(t),
+          visits,
+        }));
+      } else {
+        analytics_formatted = analytics.data.data.map(({ t, visits }) => ({
+          t: formatTime(t),
+          visits,
+        }));
+      }
+
+      return res.status(200).json(analytics_formatted);
+    } catch (error) {
+      // Tinybird API 调用失败时返回模拟数据
+      return res.status(200).json(getMockData());
     }
-
-    return res.status(200).json(analytics_formatted);
   } catch (error) {
-    // 返回正确格式的模拟数据
-    const mockData = [];
-    const today = new Date();
-    
-    // 生成过去7天的模拟数据
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      mockData.push({
-        t: formatDate(date.toISOString()),
-        visits: 0
-      });
-    }
-    
-    return res.status(200).json(mockData);
+    // 其他错误时也返回模拟数据
+    return res.status(200).json(getMockData());
   }
-}
-
-function formatDate(dateStr) {
-  const dateObj = new Date(dateStr);
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const month = monthNames[dateObj.getMonth()];
-  const day = dateObj.getDate();
-  return `${month} ${day}`;
-}
-
-function formatTime(dateStr) {
-  const dateObj = new Date(dateStr);
-  let hours = dateObj.getHours();
-  const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-  const amPM = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12 || 12; // Convert to 12-hour clock
-  return `${hours}:${minutes} ${amPM}`;
 }
 
 //   if (req.method !== "POST" && req.method !== "GET") {
