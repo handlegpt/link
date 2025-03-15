@@ -1,9 +1,11 @@
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from '@/lib/db';
 import NextAuth from 'next-auth/next';
 import { nanoid } from 'nanoid';
+import bcrypt from 'bcryptjs';
 
 export const authOptions = {
   adapter: PrismaAdapter(db),
@@ -17,6 +19,34 @@ export const authOptions = {
   },
 
   providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        email: { label: "邮箱", type: "email" },
+        password: { label: "密码", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('请输入邮箱和密码');
+        }
+
+        const user = await db.user.findUnique({
+          where: { email: credentials.email }
+        });
+
+        if (!user || !user.password) {
+          throw new Error('邮箱或密码错误');
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+
+        if (!isValid) {
+          throw new Error('邮箱或密码错误');
+        }
+
+        return user;
+      }
+    }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
