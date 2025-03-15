@@ -6,6 +6,9 @@ const getMockData = () => {
   ];
 };
 
+const cache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).end();
@@ -18,9 +21,21 @@ export default async function handler(req, res) {
       return res.status(404).end();
     }
 
+    // 检查缓存
+    const cachedData = cache.get(handle);
+    if (cachedData) {
+      const { data, timestamp } = cachedData;
+      if (Date.now() - timestamp < CACHE_DURATION) {
+        return res.status(200).json(data);
+      }
+      cache.delete(handle);
+    }
+
     // 如果没有配置 Tinybird token，返回模拟数据
     if (!process.env.LOCATION_ANALYTICS_TOKEN) {
-      return res.status(200).json(getMockData());
+      const mockData = getMockData();
+      cache.set(handle, { data: mockData, timestamp: Date.now() });
+      return res.status(200).json(mockData);
     }
 
     const endpoint = 'https://api.tinybird.co/v0/pipes/libre_location_tracking.json';
@@ -29,6 +44,12 @@ export default async function handler(req, res) {
       const analytics = await axios.get(
         `${endpoint}?token=${process.env.LOCATION_ANALYTICS_TOKEN}&handle=/${handle}`
       );
+
+      // 存入缓存
+      cache.set(handle, { 
+        data: analytics.data.data, 
+        timestamp: Date.now() 
+      });
 
       return res.status(200).json(analytics.data.data);
     } catch (error) {

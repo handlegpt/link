@@ -30,6 +30,9 @@ const getMockData = () => {
   return mockData;
 };
 
+const cache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).end();
@@ -42,9 +45,22 @@ export default async function handler(req, res) {
       return res.status(404).end();
     }
 
+    // 检查缓存
+    const cacheKey = `${handle}-${filter}`;
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) {
+      const { data, timestamp } = cachedData;
+      if (Date.now() - timestamp < CACHE_DURATION) {
+        return res.status(200).json(data);
+      }
+      cache.delete(cacheKey);
+    }
+
     // 如果没有配置 Tinybird token，返回模拟数据
     if (!process.env.ANALYTICS_TOKEN) {
-      return res.status(200).json(getMockData());
+      const mockData = getMockData();
+      cache.set(cacheKey, { data: mockData, timestamp: Date.now() });
+      return res.status(200).json(mockData);
     }
 
     const endpoint = 'https://api.tinybird.co/v0/pipes/libre_page_views.json';
@@ -67,6 +83,12 @@ export default async function handler(req, res) {
           visits,
         }));
       }
+
+      // 存入缓存
+      cache.set(cacheKey, { 
+        data: analytics_formatted, 
+        timestamp: Date.now() 
+      });
 
       return res.status(200).json(analytics_formatted);
     } catch (error) {
