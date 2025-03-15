@@ -19,6 +19,12 @@ import useMediaQuery from '@/hooks/use-media-query';
 import { signOut } from 'next-auth/react';
 import Head from 'next/head';
 import { UserCircle, AtSign, FileText, Camera, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import SocialLinksEditor from '@/components/core/admin-panel/social-links-editor';
 
 const Settings = () => {
   const { data: currentUser } = useCurrentUser();

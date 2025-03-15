@@ -131,37 +131,18 @@ model LinkGroup {
 
 // 更新 Link 模型
 model Link {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  url         String
-  description String?   // 链接描述
-  thumbnail   String?   // 预览图
-  archived    Boolean   @default(false)
-  order       Int
-  isSocial    Boolean  @default(false)
-  
-  // 访问控制
-  password    String?   // 访问密码
-  startDate   DateTime? // 上线时间
-  endDate     DateTime? // 下线时间
-  geoRestriction String[] // 地理位置限制
-  
-  // 统计数据
-  clicks      Int      @default(0)
-  uniqueClicks Int     @default(0)
-  
-  // 分组
-  groupId     String?  @db.ObjectId
-  group       LinkGroup? @relation(fields: [groupId], references: [id])
-  
-  // 互动
-  likes       Int      @default(0)
-  
-  // 元数据
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  order     Int      @default(0)
+  archived  Boolean  @default(false)
+  isSocial  Boolean  @default(false)  // 新增字段，用于标记社交链接
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   String?
+  group     LinkGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([groupId])

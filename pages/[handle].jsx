@@ -14,6 +14,7 @@ import useLinks from '@/hooks/useLinks';
 import Script from 'next/script';
 import { SocialCards } from '@/components/core/user-profile/social-cards';
 import Head from 'next/head';
+import Image from 'next/image';
 
 const ProfilePage = () => {
   const { query } = useRouter();
@@ -89,6 +90,9 @@ const ProfilePage = () => {
     neutral: fetchedUser?.themePalette.palette[3],
   };
 
+  const regularLinks = userLinks?.filter(link => !link.isSocial && !link.archived) || [];
+  const socialLinks = userLinks?.filter(link => link.isSocial && !link.archived) || [];
+
   return (
     <>
       <Head>
@@ -150,21 +154,26 @@ const ProfilePage = () => {
               {fetchedUser?.bio}
             </p>
           )}
-          <div className="min-w-max flex flex-wrap gap-2 mb-8 lg:w-fit lg:gap-4">
-            {userLinks
-              ?.filter((link) => link.isSocial && !link.archived)
-              .map(({ id, title, url }) => {
-                return (
+          {socialLinks.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-3 mb-8">
+              {socialLinks.map(link => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block"
+                >
                   <SocialCards
-                    key={title}
-                    title={title}
-                    url={url}
-                    color={theme.accent}
-                    registerClicks={() => handleRegisterClick(id)}
+                    title={link.title}
+                    url={link.url}
+                    color="1F2937"
+                    size="small"
                   />
-                );
-              })}
-          </div>
+                </a>
+              ))}
+            </div>
+          )}
           {userLinks
             ?.filter((link) => !link.isSocial)
             .map(({ id, ...link }) => (

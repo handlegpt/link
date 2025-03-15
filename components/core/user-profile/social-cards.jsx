@@ -1,46 +1,49 @@
 /* eslint-disable @next/next/no-img-element */
 import { getApexDomain, removeHashFromHexColor } from '@/utils/helpers';
-export const SocialCards = ({ url, title, color, registerClicks }) => {
-  const validColor = removeHashFromHexColor(color);
+import { 
+  Twitter, 
+  Facebook, 
+  Instagram, 
+  Linkedin, 
+  Github, 
+  Youtube,
+  MessageCircle,
+  Send,
+  Phone,
+  Globe
+} from 'lucide-react';
 
-  // checking for website aliases: adding more soon
-  const specialCases = {
-    x: 'twitter',
-    fb: 'facebook',
-    pin: 'pinterest',
-    discordapp: 'discord',
-    t: 'telegram',
+const socialIcons = {
+  twitter: Twitter,
+  facebook: Facebook,
+  instagram: Instagram,
+  linkedin: Linkedin,
+  github: Github,
+  youtube: Youtube,
+  tiktok: MessageCircle,
+  telegram: Send,
+  whatsapp: Phone,
+  wechat: MessageCircle,
+  weibo: Globe,
+  discord: MessageCircle,
+};
+
+export const SocialCards = ({ title, url, color = '1F2937', size = 'normal' }) => {
+  const platform = title.toLowerCase();
+  const Icon = socialIcons[platform] || Globe;
+  
+  const sizeClasses = {
+    small: 'w-8 h-8',
+    normal: 'w-10 h-10',
+    large: 'w-12 h-12'
   };
-
-  const getSocialMediaName = (url) => {
-    const domainURL = getApexDomain(url);
-    // Use a regular expression to match only the site name
-    const siteName = domainURL.match(/^[^.]+/);
-
-    if (siteName && !(siteName in specialCases)) {
-      return siteName[0];
-    } else {
-      return specialCases[siteName[0]];
-    }
-  };
-
-  const socialIcon = getSocialMediaName(url);
 
   return (
-    <>
-      <a
-        onClick={registerClicks}
-        target="_blank"
-        href={url}
-        className="hover:scale-125 transition-all w-[30px] h-[30px]  md:h-[35px] md:w-[35px] rounded-full px-2 lg:w-[42px] lg:h-[42px]"
-      >
-        <img
-          loading="lazy"
-          src={`https://s2.svgbox.net/social.svg?color=${validColor}&ic=${socialIcon}`}
-          className="w-[42px] h-[42px]"
-          alt={title}
-        />
-      </a>
-    </>
+    <div 
+      className={`${sizeClasses[size]} rounded-full bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center`}
+      style={{ color: `#${color}` }}
+    >
+      <Icon className="w-5 h-5" />
+    </div>
   );
 };
