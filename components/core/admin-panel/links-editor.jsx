@@ -185,7 +185,7 @@ const LinksEditor = () => {
                     transition={{ duration: 0.5 }}
                   >
                     <SortableContext
-                      items={filteredLinks}
+                      items={filteredLinks.map(link => link.id)}
                       strategy={verticalListSortingStrategy}
                     >
                       <Link key={id} id={id} {...userLink} />
