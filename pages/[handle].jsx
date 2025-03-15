@@ -15,6 +15,7 @@ import Script from 'next/script';
 import { SocialCards } from '@/components/core/user-profile/social-cards';
 import Head from 'next/head';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 const ProfilePage = () => {
   const { query } = useRouter();
@@ -155,22 +156,30 @@ const ProfilePage = () => {
             </p>
           )}
           {socialLinks.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <div className="flex flex-wrap justify-center gap-4 mb-8 px-4 max-w-[480px]">
               {socialLinks.map(link => (
-                <a
+                <motion.div
                   key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <SocialCards
-                    title={link.title}
-                    url={link.url}
-                    color="1F2937"
-                    size="small"
-                  />
-                </a>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleRegisterClick(link.id)}
+                    className="inline-block"
+                  >
+                    <SocialCards
+                      title={link.title}
+                      url={link.url}
+                      color={theme.accent.replace('#', '')}
+                      size="normal"
+                    />
+                  </a>
+                </motion.div>
               ))}
             </div>
           )}

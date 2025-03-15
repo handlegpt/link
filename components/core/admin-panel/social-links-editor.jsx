@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Select from '@radix-ui/react-select';
-import { ChevronDown, ChevronUp, Check } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ChevronDown, ChevronUp, Check, GripVertical } from 'lucide-react';
+import { motion, Reorder } from 'framer-motion';
 import Image from 'next/image';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -27,6 +27,14 @@ const socialPlatforms = [
   { name: 'WhatsApp', icon: 'whatsapp', urlPrefix: 'https://wa.me/' },
   { name: 'WeChat', icon: 'wechat', urlPrefix: 'weixin://' },
   { name: 'Weibo', icon: 'weibo', urlPrefix: 'https://weibo.com/' },
+  { name: 'Email', icon: 'email', urlPrefix: 'mailto:' },
+  { name: 'Shop', icon: 'shop', urlPrefix: 'https://' },
+  { name: 'Snapchat', icon: 'snapchat', urlPrefix: 'https://snapchat.com/add/' },
+  { name: 'Medium', icon: 'medium', urlPrefix: 'https://medium.com/@' },
+  { name: 'Twitch', icon: 'twitch', urlPrefix: 'https://twitch.tv/' },
+  { name: 'Bilibili', icon: 'bilibili', urlPrefix: 'https://space.bilibili.com/' },
+  { name: 'Zhihu', icon: 'zhihu', urlPrefix: 'https://zhihu.com/people/' },
+  { name: 'Douyin', icon: 'douyin', urlPrefix: 'https://douyin.com/user/' }
 ];
 
 const AddSocialLinkModal = () => {
@@ -163,11 +171,29 @@ const SocialLinksEditor = () => {
   const { data: userLinks, isLoading } = useLinks(userId);
   const queryClient = useQueryClient();
 
-  const socialLinks = userLinks?.filter(link => link.isSocial && !link.archived);
+  const [socialLinks, setSocialLinks] = useState([]);
+  
+  useEffect(() => {
+    if (userLinks) {
+      setSocialLinks(userLinks.filter(link => link.isSocial && !link.archived));
+    }
+  }, [userLinks]);
 
   const deleteLinkMutation = useMutation(
     async (linkId) => {
       await axios.delete(`/api/links/${linkId}`);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['links', userId]);
+        signalIframe();
+      },
+    }
+  );
+
+  const updateOrderMutation = useMutation(
+    async (links) => {
+      await axios.patch('/api/links/reorder', { links });
     },
     {
       onSuccess: () => {
@@ -183,6 +209,15 @@ const SocialLinksEditor = () => {
       success: '社交链接已删除',
       error: '删除失败',
     });
+  };
+
+  const handleReorder = async (newOrder) => {
+    setSocialLinks(newOrder);
+    const updatedLinks = newOrder.map((link, index) => ({
+      id: link.id,
+      order: index,
+    }));
+    await updateOrderMutation.mutateAsync(updatedLinks);
   };
 
   return (
@@ -202,43 +237,49 @@ const SocialLinksEditor = () => {
         </Dialog.Root>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         {!isLoading ? (
           socialLinks?.length > 0 ? (
-            socialLinks.map(({ id, title, url }) => (
-              <motion.div
-                key={id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-                className="relative group"
-              >
-                <button
-                  onClick={() => handleDeleteLink(id)}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 rounded-full text-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-200"
+            <Reorder.Group axis="y" values={socialLinks} onReorder={handleReorder}>
+              {socialLinks.map((link) => (
+                <Reorder.Item
+                  key={link.id}
+                  value={link}
+                  className="relative group bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors"
                 >
-                  ×
-                </button>
-                <div className="p-4 border border-slate-200 rounded-xl hover:border-slate-300 transition-colors">
-                  <SocialCards
-                    title={title}
-                    url={url}
-                    color="1F2937"
-                  />
-                  <p className="mt-2 text-sm text-center text-slate-600">{title}</p>
-                </div>
-              </motion.div>
-            ))
+                  <div className="flex items-center p-4 cursor-move">
+                    <GripVertical className="w-5 h-5 text-slate-400 mr-3" />
+                    <div className="flex items-center flex-1">
+                      <SocialCards
+                        title={link.title}
+                        url={link.url}
+                        color="1F2937"
+                        size="normal"
+                      />
+                      <div className="ml-4">
+                        <p className="font-medium">{link.title}</p>
+                        <p className="text-sm text-slate-500">{link.url}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteLink(link.id)}
+                      className="ml-2 w-8 h-8 bg-red-100 rounded-full text-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-200"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
           ) : (
-            <div className="col-span-full mt-4 text-center">
+            <div className="text-center py-8 bg-slate-50 rounded-xl">
               <p className="text-slate-600">还没有添加任何社交链接</p>
               <p className="text-sm text-slate-500 mt-1">点击上方按钮添加您的第一个社交链接</p>
             </div>
           )
         ) : (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-[100px] rounded-xl bg-slate-100 animate-pulse" />
+            <div key={i} className="h-[72px] rounded-xl bg-slate-100 animate-pulse" />
           ))
         )}
       </div>
