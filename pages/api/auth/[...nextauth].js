@@ -66,6 +66,7 @@ export const authOptions = {
         session.user.name = token.name;
         session.user.email = token.email;
         session.user.handle = token.handle;
+        session.user.role = token.role;
       }
       return session;
     },
@@ -98,6 +99,7 @@ export const authOptions = {
         name: dbUser.name,
         email: dbUser.email,
         handle: dbUser.handle,
+        role: dbUser.role,
         buttonStyle: dbUser.buttonStyle,
         themePalette: dbUser.themePalette,
       };

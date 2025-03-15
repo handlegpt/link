@@ -36,8 +36,8 @@ const Home = () => {
         />
         <meta
           property="og:image"
-          itemprop="image"
           content="https://librelinks.vercel.app/og.png"
+          itemProp="image"
         />
         <meta
           property="og:image"
@@ -69,6 +69,7 @@ const Home = () => {
         <meta
           name="twitter:image"
           content="https://librelinks.vercel.app/og.png"
+          itemProp="image"
         />
         <meta name="twitter:image" content="https://librelinks.me/og.png" />
         <meta name="twitter:image" content="https://www.librelinks.me/og.png" />
