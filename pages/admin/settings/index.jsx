@@ -18,6 +18,7 @@ import CustomAlert from '@/components/shared/alerts/custom-alert';
 import useMediaQuery from '@/hooks/use-media-query';
 import { signOut } from 'next-auth/react';
 import Head from 'next/head';
+import { UserCircle, AtSign, FileText, Camera, Trash2 } from 'lucide-react';
 
 const Settings = () => {
   const { data: currentUser } = useCurrentUser();
@@ -57,28 +58,28 @@ const Settings = () => {
     },
     {
       onError: () => {
-        toast.error('An error occurred');
+        toast.error('操作失败');
       },
       onSuccess: () => {
         queryClient.invalidateQueries('users');
-        toast.success('Changes applied');
+        toast.success('更新成功');
         signalIframe();
       },
     }
   );
 
   const handleSubmit = async () => {
-    toast.loading('Applying changes');
+    toast.loading('正在更新...');
     await editMutation.mutateAsync({ bio, username, image, handle });
   };
 
   // delete profile picture
   const handleDeletePfp = async () => {
     if (image === '') {
-      toast.error('There is nothing to delete');
+      toast.error('没有可删除的头像');
       return;
     } else {
-      toast.loading('Applying changes');
+      toast.loading('正在删除...');
       await editMutation.mutateAsync({ bio, username, image: '', handle });
     }
   };
@@ -98,99 +99,133 @@ const Settings = () => {
 
   const handleDeleteUser = async () => {
     await toast.promise(deleteMutation.mutateAsync(), {
-      loading: 'Deleting your account',
-      success: 'So long partner 🫡',
-      error: 'An error occured',
+      loading: '正在删除账号...',
+      success: '账号已删除 👋',
+      error: '删除失败',
     });
     await signOut();
   };
 
   const deleteAlertProps = {
     action: handleDeleteUser,
-    title: 'Are you absolutely sure?',
-    desc: 'This action cannot be undone. This will permanently delete your account and remove your data from our servers.',
-    confirmMsg: 'Yes, delete account',
+    title: '确定要删除账号吗？',
+    desc: '此操作无法撤销。删除账号将永久移除您的所有数据。',
+    confirmMsg: '确认删除',
   };
 
   return (
     <>
       <Head>
-        <title>Librelinks | Settings</title>
+        <title>个人设置 - Librelinks</title>
       </Head>
       <Layout>
         <div className="w-full lg:basis-3/5 pl-4 pr-4 border-r overflow-scroll">
           <div className="max-w-[690px] mx-auto my-10">
-            <h3 className="text-xl font-semibold">Profile</h3>
+            <h3 className="text-xl font-semibold flex items-center gap-2">
+              <UserCircle className="w-6 h-6" />
+              个人资料
+            </h3>
             <div className="mt-4 rounded-2xl border bg-white p-lg w-full h-auto pb-10">
               <div className="flex flex-col lg:flex-row gap-x-6 p-10">
-                <div className="w-[100px] h-[100px] pb-6 rounded-full flex items-center mx-auto">
+                <div className="w-[100px] h-[100px] pb-6 rounded-full flex items-center mx-auto relative group">
                   {fetchedUser ? (
-                    <UserAvatarSetting />
+                    <>
+                      <UserAvatarSetting />
+                      <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Dialog.Root>
+                          <Dialog.Trigger asChild>
+                            <button className="text-white p-2 rounded-full hover:bg-black hover:bg-opacity-20">
+                              <Camera size={24} />
+                            </button>
+                          </Dialog.Trigger>
+                          <UploadModal
+                            value={image}
+                            onChange={(image) => setImage(image)}
+                            submit={handleSubmit}
+                          />
+                        </Dialog.Root>
+                      </div>
+                    </>
                   ) : (
                     <TinyLoader color="black" stroke={1} size={100} />
                   )}
                 </div>
                 <div className="flex flex-col gap-2 pt-2">
-                  <div className="relative overflow-hidden">
-                    <Dialog.Root>
-                      <Dialog.Trigger asChild>
-                        <button className="relative w-full lg:w-[490px] h-[45px] border rounded-3xl border-[#000] outline-none text-white bg-slate-900 p-2 hover:bg-slate-700">
-                          Pick an image
-                        </button>
-                      </Dialog.Trigger>
-                      <UploadModal
-                        value={image}
-                        onChange={(image) => setImage(image)}
-                        submit={handleSubmit}
-                      />
-                    </Dialog.Root>
-                  </div>
                   <button
                     onClick={handleDeletePfp}
-                    className="w-full lg:w-[490px] h-[45px] border border-[#aaa] 
-                    outline-none font-semibold text-slate-900 bg-white p-2 rounded-3xl hover:bg-gray-100"
+                    className="flex items-center justify-center gap-2 w-full lg:w-[490px] h-[45px] border border-red-200 
+                    outline-none font-semibold text-red-500 bg-white p-2 rounded-xl hover:bg-red-50 transition-colors"
                   >
-                    Remove
+                    <Trash2 size={18} />
+                    删除头像
                   </button>
                 </div>
               </div>
-              <div className="flex flex-col gap-4 max-w-[640px] mx-auto px-4">
-                <input
-                  value={username ?? ''}
-                  onChange={(e) => setUsername(e.target.value)}
-                  onBlur={handleSubmit}
-                  placeholder="@Username"
-                  className="outline-none w-full p-4 h-[50px] rounded-lg border-2 bg-gray-100 text-black focus:border-slate-900"
-                />
+              <div className="flex flex-col gap-6 max-w-[640px] mx-auto px-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-600 flex items-center gap-2">
+                    <UserCircle className="w-4 h-4" />
+                    用户名
+                  </label>
+                  <input
+                    value={username ?? ''}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onBlur={handleSubmit}
+                    placeholder="请输入用户名"
+                    className="outline-none w-full p-4 h-[50px] rounded-xl border-2 bg-gray-50 text-black focus:border-slate-900 transition-colors"
+                  />
+                </div>
 
-                <textarea
-                  value={bio ?? ''}
-                  onChange={(e) => setBio(e.target.value)}
-                  onBlur={handleSubmit}
-                  placeholder="@Bio"
-                  className="outline-none w-full p-4 h-[120px] rounded-lg border-2
-                bg-gray-100 text-black focus:border-slate-900"
-                />
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-600 flex items-center gap-2">
+                    <AtSign className="w-4 h-4" />
+                    个性域名
+                  </label>
+                  <input
+                    value={handle ?? ''}
+                    onChange={(e) => setHandle(e.target.value)}
+                    onBlur={handleSubmit}
+                    placeholder="请输入个性域名"
+                    className="outline-none w-full p-4 h-[50px] rounded-xl border-2 bg-gray-50 text-black focus:border-slate-900 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-600 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    个人简介
+                  </label>
+                  <textarea
+                    value={bio ?? ''}
+                    onChange={(e) => setBio(e.target.value)}
+                    onBlur={handleSubmit}
+                    placeholder="介绍一下自己吧..."
+                    className="outline-none w-full p-4 h-[120px] rounded-xl border-2 bg-gray-50 text-black focus:border-slate-900 transition-colors resize-none"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           <div className="max-w-[690px] mx-auto my-10">
-            <h3 className="text-xl font-semibold mb-1">Danger Zone</h3>
+            <h3 className="text-xl font-semibold mb-1 text-red-500 flex items-center gap-2">
+              <Trash2 className="w-6 h-6" />
+              危险区域
+            </h3>
             <h3 className="mb-4 text-gray-600 text-sm">
               <Balancer>
-                Deleting your account permanently deletes your page and all your
-                data.
+                删除账号将永久移除您的页面和所有数据。
               </Balancer>
             </h3>
-            <div className="w-full h-auto border bg-white rounded-lg p-6 ">
+            <div className="w-full h-auto border border-red-200 bg-white rounded-xl p-6">
               <AlertDialog.Root>
                 <AlertDialog.Trigger asChild>
                   <button
-                    className="border-none w-full lg:w-[200px] rounded-lg h-auto p-3
-									  text-white bg-red-600 hover:bg-red-500"
+                    className="border-none w-full lg:w-[200px] rounded-xl h-auto p-3
+                    text-white bg-red-500 hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
                   >
-                    Delete Account
+                    <Trash2 size={18} />
+                    删除账号
                   </button>
                 </AlertDialog.Trigger>
                 <CustomAlert {...deleteAlertProps} />
