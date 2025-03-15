@@ -11,24 +11,24 @@ import React from 'react';
 const items = [
   {
     title: 'Links',
-    href: '/admin',
+    href: '/user',
     icon: <Link2 color="black" size={18} />,
   },
 
   {
     title: 'Customize',
-    href: '/admin/customize',
+    href: '/user/customize',
     icon: <CircleDot size={18} />,
   },
 
   {
     title: 'Analytics',
-    href: '/admin/analytics',
+    href: '/user/analytics',
     icon: <BarChart color="black" size={18} />,
   },
   {
     title: 'Settings',
-    href: '/admin/settings',
+    href: '/user/settings',
     icon: <Settings2 color="black" size={18} />,
   },
 ];

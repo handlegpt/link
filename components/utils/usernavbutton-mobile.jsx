@@ -43,7 +43,7 @@ const UserNavButtonMobile = () => {
                 </p>
               </div>
               <Link
-                href="/admin/settings"
+                href="/user/settings"
                 className="flex items-center gap-3 rounded-lg py-2 text-sm hover:bg-gray-100"
               >
                 <User size={20} />

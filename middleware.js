@@ -7,10 +7,11 @@ export default async function middleware(req) {
 
   // A list of all protected pages
   const protectedPaths = [
-    '/admin',
-    '/admin/customize',
-    '/admin/analytics',
-    '/admin/settings',
+    '/user',
+    '/user/customize',
+    '/user/analytics',
+    '/user/settings',
+    '/admin/dashboard',
     '/onboarding',
   ];
 
@@ -27,7 +28,7 @@ export default async function middleware(req) {
   if (!session && protectedPaths.includes(path)) {
     return NextResponse.redirect(new URL('/login', req.url));
   } else if (session && (path === '/login' || path === '/register')) {
-    return NextResponse.redirect(new URL('/admin', req.url));
+    return NextResponse.redirect(new URL('/user', req.url));
   }
   return NextResponse.next();
 }
