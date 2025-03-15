@@ -156,31 +156,48 @@ const ProfilePage = () => {
             </p>
           )}
           {socialLinks.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-4 mb-8 px-4 max-w-[480px]">
-              {socialLinks.map(link => (
-                <motion.div
-                  key={link.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => handleRegisterClick(link.id)}
-                    className="inline-block"
+            <div className="w-full max-w-[480px] mx-auto mb-8">
+              <div className="flex flex-wrap justify-center gap-4 px-4">
+                {socialLinks.map(link => (
+                  <motion.div
+                    key={link.id}
+                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                    transition={{ 
+                      duration: 0.3,
+                      delay: link.order * 0.1 
+                    }}
                   >
-                    <SocialCards
-                      title={link.title}
-                      url={link.url}
-                      color={theme.accent.replace('#', '')}
-                      size="normal"
-                    />
-                  </a>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleRegisterClick(link.id)}
+                      className="inline-block transform hover:-translate-y-1 transition-transform duration-200"
+                    >
+                      <SocialCards
+                        title={link.title}
+                        url={link.url}
+                        color={theme.accent.replace('#', '')}
+                        size={socialLinks.length > 6 ? 'small' : 'normal'}
+                      />
+                    </a>
+                  </motion.div>
+                ))}
+              </div>
+              {socialLinks.length > 6 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-center mt-2"
+                >
+                  <p className="text-xs text-slate-500">
+                    {socialLinks.length} 个社交链接
+                  </p>
                 </motion.div>
-              ))}
+              )}
             </div>
           )}
           {userLinks

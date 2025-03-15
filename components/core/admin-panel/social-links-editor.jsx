@@ -15,26 +15,56 @@ import { SocialCards } from '../user-profile/social-cards';
 
 // 预定义的社交平台列表
 const socialPlatforms = [
-  { name: 'Twitter', icon: 'twitter', urlPrefix: 'https://twitter.com/' },
-  { name: 'Facebook', icon: 'facebook', urlPrefix: 'https://facebook.com/' },
-  { name: 'Instagram', icon: 'instagram', urlPrefix: 'https://instagram.com/' },
-  { name: 'LinkedIn', icon: 'linkedin', urlPrefix: 'https://linkedin.com/in/' },
-  { name: 'GitHub', icon: 'github', urlPrefix: 'https://github.com/' },
-  { name: 'YouTube', icon: 'youtube', urlPrefix: 'https://youtube.com/' },
-  { name: 'TikTok', icon: 'tiktok', urlPrefix: 'https://tiktok.com/@' },
-  { name: 'Telegram', icon: 'telegram', urlPrefix: 'https://t.me/' },
-  { name: 'Discord', icon: 'discord', urlPrefix: 'https://discord.gg/' },
-  { name: 'WhatsApp', icon: 'whatsapp', urlPrefix: 'https://wa.me/' },
-  { name: 'WeChat', icon: 'wechat', urlPrefix: 'weixin://' },
-  { name: 'Weibo', icon: 'weibo', urlPrefix: 'https://weibo.com/' },
-  { name: 'Email', icon: 'email', urlPrefix: 'mailto:' },
-  { name: 'Shop', icon: 'shop', urlPrefix: 'https://' },
-  { name: 'Snapchat', icon: 'snapchat', urlPrefix: 'https://snapchat.com/add/' },
-  { name: 'Medium', icon: 'medium', urlPrefix: 'https://medium.com/@' },
-  { name: 'Twitch', icon: 'twitch', urlPrefix: 'https://twitch.tv/' },
-  { name: 'Bilibili', icon: 'bilibili', urlPrefix: 'https://space.bilibili.com/' },
-  { name: 'Zhihu', icon: 'zhihu', urlPrefix: 'https://zhihu.com/people/' },
-  { name: 'Douyin', icon: 'douyin', urlPrefix: 'https://douyin.com/user/' }
+  // 社交媒体
+  { 
+    category: '社交媒体',
+    platforms: [
+      { name: 'Twitter', icon: 'twitter', urlPrefix: 'https://twitter.com/' },
+      { name: 'Facebook', icon: 'facebook', urlPrefix: 'https://facebook.com/' },
+      { name: 'Instagram', icon: 'instagram', urlPrefix: 'https://instagram.com/' },
+      { name: 'LinkedIn', icon: 'linkedin', urlPrefix: 'https://linkedin.com/in/' },
+      { name: 'TikTok', icon: 'tiktok', urlPrefix: 'https://tiktok.com/@' },
+      { name: 'Douyin', icon: 'douyin', urlPrefix: 'https://douyin.com/user/' }
+    ]
+  },
+  // 专业平台
+  {
+    category: '专业平台',
+    platforms: [
+      { name: 'GitHub', icon: 'github', urlPrefix: 'https://github.com/' },
+      { name: 'Medium', icon: 'medium', urlPrefix: 'https://medium.com/@' },
+      { name: 'Zhihu', icon: 'zhihu', urlPrefix: 'https://zhihu.com/people/' }
+    ]
+  },
+  // 视频平台
+  {
+    category: '视频平台',
+    platforms: [
+      { name: 'YouTube', icon: 'youtube', urlPrefix: 'https://youtube.com/' },
+      { name: 'Twitch', icon: 'twitch', urlPrefix: 'https://twitch.tv/' },
+      { name: 'Bilibili', icon: 'bilibili', urlPrefix: 'https://space.bilibili.com/' }
+    ]
+  },
+  // 即时通讯
+  {
+    category: '即时通讯',
+    platforms: [
+      { name: 'Telegram', icon: 'telegram', urlPrefix: 'https://t.me/' },
+      { name: 'Discord', icon: 'discord', urlPrefix: 'https://discord.gg/' },
+      { name: 'WhatsApp', icon: 'whatsapp', urlPrefix: 'https://wa.me/' },
+      { name: 'WeChat', icon: 'wechat', urlPrefix: 'weixin://' }
+    ]
+  },
+  // 其他
+  {
+    category: '其他',
+    platforms: [
+      { name: 'Weibo', icon: 'weibo', urlPrefix: 'https://weibo.com/' },
+      { name: 'Email', icon: 'email', urlPrefix: 'mailto:' },
+      { name: 'Shop', icon: 'shop', urlPrefix: 'https://' },
+      { name: 'Snapchat', icon: 'snapchat', urlPrefix: 'https://snapchat.com/add/' }
+    ]
+  }
 ];
 
 const AddSocialLinkModal = () => {
@@ -45,7 +75,9 @@ const AddSocialLinkModal = () => {
   const { data: userLinks } = useLinks(userId);
   const queryClient = useQueryClient();
 
-  const selectedPlatform = socialPlatforms.find(p => p.name.toLowerCase() === platform.toLowerCase());
+  const selectedPlatform = socialPlatforms
+    .flatMap(category => category.platforms)
+    .find(p => p.name.toLowerCase() === platform.toLowerCase());
 
   const addLinkMutation = useMutation(
     async () => {
@@ -106,17 +138,27 @@ const AddSocialLinkModal = () => {
                   <ChevronUp className="h-4 w-4" />
                 </Select.ScrollUpButton>
                 <Select.Viewport className="p-[5px]">
-                  {socialPlatforms.map((platform) => (
-                    <Select.Item
-                      key={platform.name}
-                      value={platform.name.toLowerCase()}
-                      className="text-[13px] leading-none text-slate-600 rounded-[3px] flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[disabled]:text-slate-300 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white cursor-pointer"
-                    >
-                      <Select.ItemText>{platform.name}</Select.ItemText>
-                      <Select.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
-                        <Check className="h-4 w-4" />
-                      </Select.ItemIndicator>
-                    </Select.Item>
+                  {socialPlatforms.map((category) => (
+                    <div key={category.category}>
+                      <Select.Group>
+                        <Select.Label className="px-[25px] text-xs text-slate-500 font-medium py-2">
+                          {category.category}
+                        </Select.Label>
+                        {category.platforms.map((platform) => (
+                          <Select.Item
+                            key={platform.name}
+                            value={platform.name.toLowerCase()}
+                            className="text-[13px] leading-none text-slate-600 rounded-[3px] flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[disabled]:text-slate-300 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white cursor-pointer"
+                          >
+                            <Select.ItemText>{platform.name}</Select.ItemText>
+                            <Select.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
+                              <Check className="h-4 w-4" />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
+                      <Select.Separator className="h-[1px] bg-slate-200 m-[5px]" />
+                    </div>
                   ))}
                 </Select.Viewport>
                 <Select.ScrollDownButton className="flex items-center justify-center h-[25px] bg-white text-slate-500 cursor-default">
