@@ -39,24 +39,30 @@ const AddLinkModal = ({ selectedGroup }) => {
   });
 
   const addLinkMutation = useMutation(
-    async ({ title, url, order }) => {
-      await axios.post('/api/links', {
+    async ({ title, url, order, groupId }) => {
+      const response = await axios.post('/api/links', {
         title,
         url,
         order,
         isSocial,
-        groupId
+        groupId: groupId || undefined
       });
+      return response.data;
     },
     {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['links', userId] });
+        queryClient.invalidateQueries({ queryKey: ['linkGroups', userId] });
         setTitle('');
         setUrl('');
         setIsSocial(false);
         setGroupId('');
         signalIframe();
       },
+      onError: (error) => {
+        console.error('Mutation error:', error);
+        toast.error('添加链接失败，请重试');
+      }
     }
   );
 
@@ -65,11 +71,23 @@ const AddLinkModal = ({ selectedGroup }) => {
       toast.error('请填写完整信息');
       return;
     }
-    await toast.promise(addLinkMutation.mutateAsync({ title, url, order }), {
-      loading: '添加链接中',
-      success: '链接添加成功',
-      error: '发生错误',
-    });
+    try {
+      await toast.promise(
+        addLinkMutation.mutateAsync({
+          title,
+          url,
+          order,
+          groupId: groupId || undefined  // 如果 groupId 为空字符串，则设为 undefined
+        }),
+        {
+          loading: '添加链接中',
+          success: '链接添加成功',
+          error: '发生错误',
+        }
+      );
+    } catch (error) {
+      console.error('添加链接失败:', error);
+    }
   };
 
   const handleUrlChange = (event) => {
