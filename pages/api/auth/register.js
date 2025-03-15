@@ -2,28 +2,48 @@ import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { nanoid } from 'nanoid';
 
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePassword = (password) => {
+  return password.length >= 8;
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ message: '不支持的请求方法' });
   }
 
   try {
     const { email, password, name } = req.body;
     
-    console.log('Registration attempt:', { email, name }); // 添加日志
-
+    // 输入验证
     if (!email || !password || !name) {
-      console.log('Missing fields:', { email: !!email, password: !!password, name: !!name });
       return res.status(400).json({ message: '请填写所有必填字段' });
+    }
+
+    // 数据清理
+    const sanitizedEmail = email.trim().toLowerCase();
+    const sanitizedName = name.trim();
+
+    // 邮箱格式验证
+    if (!validateEmail(sanitizedEmail)) {
+      return res.status(400).json({ message: '邮箱格式不正确' });
+    }
+
+    // 密码强度验证
+    if (!validatePassword(password)) {
+      return res.status(400).json({ message: '密码长度至少为8位' });
     }
 
     // 检查邮箱是否已存在
     const existingUser = await db.user.findUnique({
-      where: { email },
+      where: { email: sanitizedEmail },
     });
 
     if (existingUser) {
-      console.log('User already exists:', email);
       return res.status(400).json({ message: '该邮箱已被注册' });
     }
 
@@ -31,13 +51,11 @@ export default async function handler(req, res) {
     const hashedPassword = await bcrypt.hash(password, 12);
     const handle = nanoid(10); // 生成随机handle
 
-    console.log('Creating user with handle:', handle);
-
     // 创建用户
     const user = await db.user.create({
       data: {
-        email,
-        name,
+        email: sanitizedEmail,
+        name: sanitizedName,
         password: hashedPassword,
         handle,
         themePalette: {
@@ -48,16 +66,18 @@ export default async function handler(req, res) {
       },
     });
 
-    console.log('User created successfully:', user.id);
+    // 移除密码后返回用户信息
+    const { password: _, ...userWithoutPassword } = user;
+    return res.status(200).json({ 
+      message: '注册成功', 
+      user: userWithoutPassword 
+    });
 
-    return res.status(200).json({ message: '注册成功', user });
   } catch (error) {
-    console.error('Registration error:', error);
-    // 返回更详细的错误信息
+    console.error('注册错误:', error);
     return res.status(500).json({ 
-      message: '服务器错误', 
-      error: error.message,
-      code: error.code 
+      message: '服务器错误',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 } 
