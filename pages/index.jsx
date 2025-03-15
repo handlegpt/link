@@ -227,7 +227,7 @@ const Home = () => {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <a
-                    href="https://github.com/urdadx/librelinks"
+                    href="https://github.com/handlegpt/link"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-8 py-3 text-slate-600 bg-white border border-slate-200 rounded-full hover:bg-slate-50 transition-colors inline-flex items-center gap-2"
