@@ -6,6 +6,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!process.env.ANALYTICS_TOKEN) {
+      // 返回模拟数据
+      return res.status(200).json({
+        data: {
+          views: 0,
+          unique: 0
+        }
+      });
+    }
+    
     const { handle, filter } = req.query;
     const endpoint = 'https://api.tinybird.co/v0/pipes/libre_page_views.json';
 
@@ -33,10 +43,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json(analytics_formatted);
   } catch (error) {
-    console.log(error);
-    return res.status(500).end();
+    // 返回模拟数据
+    return res.status(200).json({
+      data: {
+        views: 0,
+        unique: 0
+      }
+    });
   }
 }
+
 function formatDate(dateStr) {
   const dateObj = new Date(dateStr);
   const monthNames = [
