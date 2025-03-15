@@ -6,22 +6,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (!process.env.ANALYTICS_TOKEN) {
-      // 返回模拟数据
-      return res.status(200).json({
-        data: {
-          views: 0,
-          unique: 0
-        }
-      });
-    }
-    
     const { handle, filter } = req.query;
-    const endpoint = 'https://api.tinybird.co/v0/pipes/libre_page_views.json';
 
     if (!handle || typeof handle !== 'string') {
       return res.status(404).end();
     }
+
+    if (!process.env.ANALYTICS_TOKEN) {
+      // 返回正确格式的模拟数据
+      const mockData = [];
+      const today = new Date();
+      
+      // 生成过去7天的模拟数据
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        mockData.push({
+          t: formatDate(date.toISOString()),
+          visits: 0
+        });
+      }
+      
+      return res.status(200).json(mockData);
+    }
+
+    const endpoint = 'https://api.tinybird.co/v0/pipes/libre_page_views.json';
 
     const analytics = await axios.get(
       `${endpoint}?token=${process.env.ANALYTICS_TOKEN}&filter=${filter}&handle=/${handle}`
@@ -43,13 +52,21 @@ export default async function handler(req, res) {
 
     return res.status(200).json(analytics_formatted);
   } catch (error) {
-    // 返回模拟数据
-    return res.status(200).json({
-      data: {
-        views: 0,
-        unique: 0
-      }
-    });
+    // 返回正确格式的模拟数据
+    const mockData = [];
+    const today = new Date();
+    
+    // 生成过去7天的模拟数据
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      mockData.push({
+        t: formatDate(date.toISOString()),
+        visits: 0
+      });
+    }
+    
+    return res.status(200).json(mockData);
   }
 }
 
