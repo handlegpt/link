@@ -21,12 +21,36 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   role           String    @default("user")
+  
+  // 个性化设置
+  customDomain   String?   @unique
+  backgroundColor String?
+  backgroundImage String?
+  backgroundVideo String?
+  fontFamily     String?   @default("inter")
+  isOnline       Boolean   @default(false)
+  showViews      Boolean   @default(true)
+  allowMessages  Boolean   @default(false)
+  
+  // 社交功能
+  socialLinks    SocialLink[]
+  messages       Message[]
+  subscribers    Subscriber[]
+  
+  // 现有功能
   links          Link[]
-  linksLocation String?   @default("top")
+  linksLocation  String?   @default("top")
   themePalette   Json?     @default("{\"name\": \"Light\", \"palette\": [\"#FFFFFF\", \"#F2F2F2\", \"#1F2937\", \"#6170F8\"]}")
   buttonStyle    String    @default("rounded-md")
   accounts       Account[]
 
+  // SEO 设置
+  metaTitle      String?
+  metaDescription String?
+  
+  // 安全设置
+  blockedIPs     String[]
+  
   @@unique([handle, email])
 }
 
@@ -52,21 +76,113 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+// 社交链接模型
+model SocialLink {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  platform  String   // 平台名称
+  url       String   // 链接地址
+  icon      String   // 图标
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@index([userId])
+}
+
+// 访客留言模型
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  name      String?
+  email     String?
+  isRead    Boolean  @default(false)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// 订阅者模型
+model Subscriber {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  @@unique([email, userId])
+  @@index([userId])
+}
+
+// 链接分组模型
+model LinkGroup {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  order       Int
+  links       Link[]   // 关联到 Link 模型
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 更新 Link 模型
 model Link {
-      id         String     @id @default(auto()) @map("_id") @db.ObjectId
-      title      String
-      url        String
-      archived   Boolean    @default(false)
-      order       Int
-      isSocial   Boolean    @default(false)
-      // Link metadata
-      clicks      Int       @default(0) // number of clicks
-      createdAt   DateTime  @default(now())
-      updatedAt   DateTime  @updatedAt
-      userId      String    @db.ObjectId
-      user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-      @@index(userId)
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  url         String
+  description String?   // 链接描述
+  thumbnail   String?   // 预览图
+  archived    Boolean   @default(false)
+  order       Int
+  isSocial    Boolean  @default(false)
+  
+  // 访问控制
+  password    String?   // 访问密码
+  startDate   DateTime? // 上线时间
+  endDate     DateTime? // 下线时间
+  geoRestriction String[] // 地理位置限制
+  
+  // 统计数据
+  clicks      Int      @default(0)
+  uniqueClicks Int     @default(0)
+  
+  // 分组
+  groupId     String?  @db.ObjectId
+  group       LinkGroup? @relation(fields: [groupId], references: [id])
+  
+  // 互动
+  likes       Int      @default(0)
+  
+  // 元数据
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([groupId])
+}
+
+// 访问记录模型
+model VisitLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  linkId    String?  @db.ObjectId
+  userId    String   @db.ObjectId
+  ip        String?
+  userAgent String?
+  referer   String?
+  country   String?
+  city      String?
+  device    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([linkId])
+  @@index([createdAt])
 }
 
 
